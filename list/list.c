@@ -50,14 +50,6 @@ int list_ins_next(List *list, ListElmt *element, const void *data){
   return 0;
 }
 
-/**********************************************************
- *                                                        *            
- *                                                        *
- *                                                        *
- *                                                        *
- *                                                        *
- **********************************************************/
-
 int list_rem_next(List *list, ListElmt *element, const void **data){
   ListElmt     *old_element;
   

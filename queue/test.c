@@ -2,13 +2,12 @@
 #include<stdio.h>
 
 #include "queue.h"
-void *destroy(void *data);
 int main(){
     int *x;
     int *y;
     Queue *queue;
     queue = (Queue *) malloc(sizeof(Queue));
-    queue_init(queue,NULL);
+    queue_init(queue, destroy);
     x = malloc(1);
     *x = 100;
     queue_enqueue(queue, (const void *) x);
@@ -43,7 +42,4 @@ int main(){
     printf("size after destroy: %d\n", queue_size(queue));
 }
 
-void *destroy(void *data){
-  free(data);
-}
 

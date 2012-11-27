@@ -9,3 +9,7 @@ int queue_enqueue(Queue *queue, const void *data){
 int queue_dequeue(Queue *queue, const void **data){
     return list_rem_next(queue, NULL, data);
 }
+
+void destroy(void *data){
+  free(data);
+}
