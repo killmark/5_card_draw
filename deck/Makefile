@@ -14,6 +14,6 @@ list.o: ../list/list.c ../list/list.h
 	gcc -c ../list/list.c -I../list
 
 clean:
-	rm -f *.o main *~
+	rm -f *.o test *~
 
 

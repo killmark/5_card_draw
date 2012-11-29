@@ -5,8 +5,8 @@
 typedef Queue Deck;
 
 typedef struct{
-    char *suit;
-    char *face;
+    int val;
+    int type;
 }Card;
 
 #define deck_init queue_init
