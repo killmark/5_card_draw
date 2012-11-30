@@ -2,7 +2,7 @@ driver: queue.o list.o deck.o player.o type.o driver.o
 	gcc -o driver queue.o list.o deck.o player.o type.o driver.o
 
 driver.o: driver.c player.h ../deck/deck.h ../queue/queue.h ../list/list.h
-	gcc -c driver.c -I../queue -I../list -I../deck
+	gcc -g -c driver.c -I../queue -I../list -I../deck
 
 player.o: player.c player.h ../deck/deck.h ../queue/queue.h ../list/list.h
 	gcc -c player.c -I../queue -I../list -I../deck
