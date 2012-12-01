@@ -30,21 +30,28 @@ int main(){
     /* test flush, straight, SF, RoyalSF */
     p1 = (Player*) malloc (sizeof(Player));
     player_init(p1);
-    p1->cards[0] = 0;
-    p1->cards[1] = 1;
-    p1->cards[2] = 2;
-    p1->cards[3] = 5;
-    p1->cards[4] = 19;
+    /* p1->cards[0] = 0; */
+    /* p1->cards[1] = 3; */
+    /* p1->cards[2] = 17; */
+    /* p1->cards[3] = 16; */
+    /* p1->cards[4] = 19; */
     
+    deal(deck, p1);
+
     p1->browseHands(p1);
     p1->showHands(p1);
+    printf ("%d\n",p1->hand_value);
     
     p1->discard(deck, p1);
     
+    printf ("****************************\n");
+    
     p1->browseHands(p1);
     p1->showHands(p1);
+    printf ("%d\n",p1->hand_value);
 
-    free(p1);
+    /* deck_destroy(deck); */
+    /* free(p1); */
     return 0;
 }
 

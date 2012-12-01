@@ -22,4 +22,4 @@ int check_type(Player* player);
 void swap(Player* player, int a, int b);
 void printHand(Player* player);
 void discardHand(Deck* deck, Player* player);
-int MC(Deck* deck, Player* player);
+int MC(Player* player);

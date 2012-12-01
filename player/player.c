@@ -11,7 +11,6 @@ char *type[10] = {"High Card", "One Pair", "Two Pair", "Three of A Kind",
                   "Straight", "Flush", "Full House", "Four Of A Kind", "Straight Flush",
                   "Royal Straight Flush"};
 
-
 void player_init(Player* player){
     player->browseHands = cal_value;
     player->showHands = printHand;
@@ -19,6 +18,7 @@ void player_init(Player* player){
 }
 
 void deal(Deck* deck, Player* player){
+    /* should be put in other files */
     Card* tmp;
     int i;
     
@@ -197,9 +197,10 @@ int check_type(Player* player){
                         else
                             return 3;
                     }
-
-                    if(isOnePair(a))
-                        return 1;
+                    else{
+                        if(isOnePair(a))
+                            return 1;
+                    }
                 }
             }
         }
@@ -223,14 +224,43 @@ void printHand(Player* player){
 void discardHand( Deck* deck, Player* player){
     int Val;                    /* 0-31 */
     int i,j;
+    Card* tmp;
+    //printf ("%d\n",deckForMC->size);
+    tmp = (Card*) malloc (sizeof(Card));
+    
+    Val = MC(player);
+    for (i = 0; i < 5; i++){
+        if(Val%2 == 1){
+            deck_pop(deck, (const void**) &tmp);
+            player->cards[i] = tmp->val;
+        }
+        Val = Val/2;
+    }
+    //printf ("%d\n",deckForMC->size);
+    free(tmp);
+}
+
+int MC(Player* player){
+    int i,j,n;
+    int k;
+    int cVal, tVal, DisVal, MaxHV;
+    Card* tmp;
+    Player* playerT;
+    int sum;
     Deck* deckForMC;
     ListElmt *tmpE, *tmpP;
-    Card *tmpC, *tmp;
+    Card *tmpC;
     int num;                    /* the number of total player in game (it can be parameter) */
+    int pre;
+    int index,temp;
+    int *c;
 
     deckForMC = (Deck*) malloc (sizeof(Deck));
     deck_shuffle(deckForMC);
     tmp = (Card*) malloc (sizeof(Card));
+    c = (int*) malloc (sizeof(int)*(deckForMC->size));
+    playerT = (Player*) malloc (sizeof(Player));
+    srand(time(NULL));
     
     /* remove the  player's hand from deckforMC */
     for (i = 0; i < 5; i++){
@@ -256,44 +286,19 @@ void discardHand( Deck* deck, Player* player){
             deck_pop(deckForMC, (const void**) &tmp);
         }
     }
-    //printf ("%d\n",deckForMC->size);
-
-    Val = MC(deckForMC, player);
-    for (i = 0; i < 5; i++){
-        if(Val%2 == 1){
-            deck_pop(deckForMC, (const void**) &tmp);
-            player->cards[i] = tmp->val;
-        }
-        Val = Val/2;
-    }
-    //printf ("%d\n",deckForMC->size);
-    
-    free(tmp);
-    free(deckForMC);
-}
-
-int MC(Deck* deckForMC, Player* player){
-    int i,j,n;
-    int cVal, tVal, DisVal, MaxHV;
-    Card* tmp;
-    Player* playerT;
-    int sum;
     
     MaxHV = player->hand_value;
     DisVal = 0;
-    n = 1;
-    tmp = (Card*) malloc (sizeof(Card));
-    playerT = (Player*) malloc (sizeof(Player));
+    n = 1000;
     *playerT = *player;
     sum = 0;
-
+        
     for (cVal = 1; cVal < 32; cVal++){
         for (i = 0; i < n; i++){
             tVal = cVal;
             for (j = 0; j < 5; j++){
                 if(tVal%2 == 1){
                     deck_pop(deckForMC, (const void**) &tmp);
-                    printf ("!!!%d\n",tmp->val);
                     playerT->cards[i] = tmp->val;
                     deck_push(deckForMC, (const void*) tmp);
                 }
@@ -302,17 +307,69 @@ int MC(Deck* deckForMC, Player* player){
             cal_value(playerT);
             sum += playerT->hand_value;
             *playerT = *player;
-            //deck_scramble(deckForMC);
+            
+            /* scramble the deck */
+            /* for (i = 0; i < deckForMC->size; i++){ */
+            /*     deck_pop(deckForMC, (const void**) &tmp); */
+            /*     pre = rand()%(deckForMC->size - 1); */
+            /*     tmpE = deckForMC->head; */
+            /*     for (j = 0; j < pre; j++){ */
+            /*         tmpE = tmpE->next; */
+            /*     } */
+            /*     list_ins_next(deckForMC, tmpE, (const void*) tmp); */
+            /* } */
+            /* deck_scramble(deckForMC); */
+
+            k = 0;
+            tmpE = deckForMC->head;
+            while(tmpE != NULL){
+                tmp = (Card*) tmpE->data;
+                c[k] = tmp->val;
+                tmpE = tmpE->next;
+                k++;
+            }
+            
+            /* scramble the array */
+            for (k = deckForMC->size - 1; k > 0; k--){
+                index = rand() % (k+1);
+                temp = c[index];
+                c[index] = c[k];
+                c[k] = temp;
+            }
+
+            k = 0;
+            tmpE = deckForMC->head;
+            while(tmpE != NULL){
+                tmp = (Card*) tmpE->data;
+                tmp->val = c[k];
+                tmpE = tmpE->next;
+                k++;
+            }
+            
+            /* tmpE = deckForMC->head; */
+            /* printf ("-----------------\n"); */
+            /* for (pre = 0; pre < deckForMC->size; pre++){ */
+            /*     tmp = (Card*) tmpE->data; */
+            /*     tmpE = tmpE->next; */
+            /*     printf ("%d\n",tmp->val); */
+            /* } */
+            /* printf ("***************\n"); */
+            /* tmpE = deckForMC->tail; */
+            /* tmp = (Card*) tmpE->data; */
+            /* printf ("**%d\n",tmp->val); */
         }
         sum = sum/n;
         if (sum > MaxHV){
             MaxHV = sum;
             DisVal = cVal;
         }
+        
         sum = 0;
     }
+    printf ("---%d\n",DisVal);
+    printf ("---%d\n",MaxHV);
     free(tmp);
-    free(playerT);
+    /* free(playerT); */
     
     return DisVal; 
 }
