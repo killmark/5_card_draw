@@ -23,6 +23,10 @@ void game_init(Game* game){
     game->start_round = game_start;
     game->discard_round = game_discard;
     game->show_results = game_show;
+    game->blind_betting = game_blind_bet;
+    game->reg_betting = game_reg_bet;
+    game->pot = 0;
+    game->currentCall = 0;
 }
 void game_start(Game* game){
     int i;
@@ -51,5 +55,59 @@ void game_show(Game* game){
             tmp = i;
         }
     }
+    game->p[tmp]->chips += game->pot;
     printf ("the winner is Player %d\n",tmp);
+    for (i = 0; i < 4; i++){
+        printf ("player %d chips: %d\n", i, game->p[i]->chips);
+    }
 }
+void game_blind_bet(Game* game){
+    int i;
+    for (i = 0; i < 4; i++){
+        game->p[i]->chips --;
+        game->pot ++;
+    }
+}
+void game_reg_bet(Game* game){
+    int i;
+    int r = 0;
+    /* if no check it is correct. */
+    do{
+        for (i = 0; i < 4; i++){
+            game->p[i]->make_decision(game->p[i], &(game->currentCall));
+            if(game->p[i]->is_finish == 1){
+                break;
+            }
+            else{
+                printf ("player %d\n",i);
+            }
+        }
+        printf ("--------------------\n");
+    }while(check_end(game));
+    
+    for (i = 0; i < 4; i++){
+        game->p[i]->chips -= game->p[i]->current_betting;
+        game->pot += game->p[i]->current_betting;
+        game->p[i]->current_betting = 0;
+        game->p[i]->is_finish = 0;
+        game->currentCall = 0;
+    }
+}
+int check_end(Game* game){
+    int i;
+    int bet;
+    for (i = 0; i < 4; i++){
+        if(!game->p[i]->is_fold){
+            bet = game->p[i]->current_betting;
+            break;
+        }
+    }
+    for (i = 0; i < 4; i++){
+        if(!game->p[i]->is_fold){
+            if(bet != game->p[i]->current_betting)
+                return 1;
+        }
+    }
+    return 0;
+}
+

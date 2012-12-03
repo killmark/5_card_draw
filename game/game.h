@@ -5,9 +5,13 @@
 typedef struct game{
     Player *p[4];               /* p[0] is user and rest are AI */
     Deck* deck;
+    int pot;
+    int currentCall;
     void (*start_round)(struct game* g);
     void (*discard_round)(struct game* g);
     void (*show_results)(struct game* g);
+    void (*blind_betting)(struct game* g);
+    void (*reg_betting)(struct game* g);
 }Game;
 
 void game_init(Game* game);
@@ -15,4 +19,6 @@ void game_deal(Deck* deck, Player* player);
 void game_start(Game* game);
 void game_discard(Game* game);
 void game_show(Game* game);
-
+void game_blind_bet(Game* game);
+void game_reg_bet(Game* game);
+int check_end(Game* game);
