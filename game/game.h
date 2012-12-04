@@ -27,3 +27,7 @@ void game_menu(Game* game);
 void game_info();
 int check_end(Game* game);
 void printStatus(Game* game, int s);
+void user_decision(Game* game);
+void reset(Game* game);
+void hint(int val);
+void user_discard(Game* game);
