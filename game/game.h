@@ -7,7 +7,7 @@ typedef struct game{
     Deck* deck;
     int pot;
     int currentCall;
-    void (*start_round)(struct game* g);
+    void (*first_round)(struct game* g);
     void (*discard_round)(struct game* g);
     void (*show_results)(struct game* g);
     void (*blind_betting)(struct game* g);
@@ -16,9 +16,14 @@ typedef struct game{
 
 void game_init(Game* game);
 void game_deal(Deck* deck, Player* player);
-void game_start(Game* game);
+void game_first(Game* game);
 void game_discard(Game* game);
+void game_start(Game* game);
 void game_show(Game* game);
 void game_blind_bet(Game* game);
 void game_reg_bet(Game* game);
+void game_welcome(Game* game);
+void game_menu(Game* game);
+void game_info();
 int check_end(Game* game);
+void printStatus(Game* game, int s);
