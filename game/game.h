@@ -31,3 +31,5 @@ void user_decision(Game* game);
 void reset(Game* game);
 void hint(int val);
 void user_discard(Game* game);
+void confirm();
+int check_finish(Game* game);

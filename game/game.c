@@ -41,14 +41,36 @@ void game_first(Game* game){
 void game_discard(Game* game){
     int i;
     int val = 0;
-    val = game->p[0]->discard(game->deck, game->p[0]);
-    game->p[0]->browseHands(game->p[0]);
-    hint(val);
-    user_discard(game);
-    game->p[0]->browseHands(game->p[0]);
+    int ret;
+    if(no_others(game, -1))
+        return;
+    printf ("Input the card number to discard one card each time.\n");
+    printf ("-------------------------\n");
+    printf ("1-5 to discard card by number\n");
+    printf ("Y/y to finish or skip discarding\n");
+    printf ("N/n to cancel previous discarding\n");
+    printf ("-------------------------\n");
+    if(!game->p[0]->is_fold){
+        val = game->p[0]->discard(game->deck, game->p[0]);
+        game->p[0]->browseHands(game->p[0]);
+        hint(val);
+        user_discard(game);
+        game->p[0]->browseHands(game->p[0]);
+    }
+    
     for (i = 1; i < 4; i++){
-        val = game->p[i]->discard(game->deck, game->p[i]);
-        game->p[i]->browseHands(game->p[i]);
+        ret = 0;
+        if (!game->p[i]->is_fold){
+            val = game->p[i]->discard(game->deck, game->p[i]);
+            game->p[i]->browseHands(game->p[i]);
+            while(val){
+                if(val%2 == 1)
+                    ret++;
+                val = val/2;
+            }
+            printf ("-------------------------\n");
+            printf ("Player %d discards %d cards.\n", i, ret);
+        }
     }
 }
 void user_discard(Game* game){
@@ -57,14 +79,16 @@ void user_discard(Game* game){
     int opt;
     char x[100];
     Card* tmp;
-
+    
     while(1){
         printf ("Input one card to discard:");
         scanf("%s", x);
         if(!strcmp(x,"Y") | !strcmp(x,"y")){
+            printf ("\n-------Waiting for other players-------\n");
             break;
         }
         if(!strcmp(x,"N") | !strcmp(x,"n")){
+            printf ("\n-------You have cancelled previous discarding.-------\n");
             for (i = 0; i < 5; i++){
                 a[i] = 0;
             }
@@ -76,7 +100,7 @@ void user_discard(Game* game){
                     a[opt - 1] = 1;
                 }
                 else{
-                    printf ("You have chosen this card.\n");
+                    printf ("\n-------You have already chosen this card.-------\n");
                 }
             }
         }
@@ -91,12 +115,11 @@ void user_discard(Game* game){
 }
 void hint(val){
     int i;
-    printf ("You are luck, I will give you some advice: \n");
     if(val == 0){
         printf ("You have a good hand. Just keep it.\n");
     }
     else{
-        printf ("You should discard Card ");
+        printf ("You may discard Card ");
         for (i = 0; i < 5; i++){
             if(val%2 == 1){
                 printf ("%d ",i+1);
@@ -111,25 +134,46 @@ void game_show(Game* game){
     int maxV,tmp;
     maxV = 0;
     tmp = 0;
-    for (i = 0; i < 4; i++){
-        printf ("Player %d:\n",i);
-        game->p[i]->showHands(game->p[i]);
-        if(game->p[i]->hand_value > maxV){
-            maxV = game->p[i]->hand_value;
-            tmp = i;
+    printf ("--------------Pot: %d chips----------------\n", game->pot);
+    if(!game->p[0]->is_fold){
+        maxV = game->p[0]->hand_value;
+        tmp = 0;
+        printf ("Mr 47:\n");
+        game->p[0]->showHands(game->p[0]);
+    }
+
+    for (i = 1; i < 4; i++){
+        if(!game->p[i]->is_fold){
+            printf ("Player %d:\n",i);
+            game->p[i]->showHands(game->p[i]);
+            if(game->p[i]->hand_value > maxV){
+                maxV = game->p[i]->hand_value;
+                tmp = i;
+            }
         }
     }
+    
     game->p[tmp]->chips += game->pot;
-    printf ("the winner is Player %d\n",tmp);
-    for (i = 0; i < 4; i++){
-        printf ("player %d chips: %d\n", i, game->p[i]->chips);
+    
+    if(tmp != 0){
+        printf ("The winner is Player %d\n",tmp);
+        printf ("-------------------------\n");
+    }
+    else{
+        printf ("The winner is Mr 47.\n");
+        printf ("-------------------------\n");
     }
 }
 void game_blind_bet(Game* game){
     int i;
     for (i = 0; i < 4; i++){
-        game->p[i]->chips --;
-        game->pot ++;
+        if(game->p[i]->chips >= 3){
+            game->p[i]->chips --;
+            game->pot ++;
+        }
+        else{
+            game->p[i]->is_fold = 1;
+        }
     }
 }
 void game_reg_bet(Game* game){
@@ -137,22 +181,37 @@ void game_reg_bet(Game* game){
     int r = 0;
     char x[100];
     int opt;
+    int fn;
     
     /* if no check it is correct. */
+    for (i = 0; i < 4; i++){
+        if(game->p[i]->is_finish)
+            return;
+    }
+
     do{
         user_decision(game);
+        if(game->p[0]->is_finish == 1){
+            break;
+        }
         for (i = 1; i < 4; i++){
+            if(no_others(game, i)){
+                game->p[i]->is_finish = 1;
+                break;
+            }
+            if(!game->p[i]->is_fold){
+                if(game->currentCall == 0 | game->currentCall != game->p[i]->current_betting){
+                    printf ("-------------------------\n");
+                    printf ("Player %d\t",i);
+                }
+            }
             game->p[i]->make_decision(game->p[i], &(game->currentCall));
             if(game->p[i]->is_finish == 1){
                 break;
             }
-            else{
-                printf ("player %d\n",i);
-            }
         }
-        printf ("--------------------\n");
     }while(check_end(game));
-    
+            
     for (i = 0; i < 4; i++){
         game->p[i]->chips -= game->p[i]->current_betting;
         game->pot += game->p[i]->current_betting;
@@ -181,6 +240,7 @@ int check_end(Game* game){
 
 void game_welcome(Game* game){
     char x[100];
+    int i;
 
     srand(time(NULL));
     system("clear");
@@ -222,10 +282,9 @@ void game_menu(Game* game){
         system("clear");
         printf ("*******Main Menu*******\n");
         printf ("1. Start Game\n");
-        printf ("2. Personal Info\n");
-        printf ("3. Get More Chips\n");
-        printf ("4. Help\n");
-        printf ("5. Quit\n");
+        printf ("2. Get More Chips\n");
+        printf ("3. Help\n");
+        printf ("4. Quit\n");
         scanf ("%s", x);
         opt = atoi(x);
         switch(opt){
@@ -235,17 +294,15 @@ void game_menu(Game* game){
             break;
         case 2:
             system("clear");
-            printf ("2\n");
+            printf ("I am kidding.\n\n");
+            confirm();
             break;
         case 3:
             system("clear");
-            printf ("I am kidding.\n\n");
+            printf ("rules\n\n");
+            confirm();
             break;
         case 4:
-            system("clear");
-            printf ("rules\n\n");
-            break;
-        case 5:
             exit(0);
         default:
             system("clear");
@@ -255,41 +312,82 @@ void game_menu(Game* game){
 }
 void game_start(Game* game){
     char x[100];
+    
+    system("clear");
+    printf ("*******5 Card Draw*******\n");
+    printf ("Enjoy yourself, Mr 47\n");
+    confirm();
+    
     while(1){
-        system("clear");
-        printf ("*******5 Card Draw*******\n");
-        /* blind betting */
-        printf ("Blind Betting:\n");
+
+        if(check_finish(game)){
+            confirm();
+            break;
+        }
+        
+        /* current status */
+        printf ("Hi everyone,\n");
+        printf ("We have 4 players on the table:\n");
         printStatus(game, 1);
-        printf ("\nEach player must bet 1 chip in this round.\n");
+
+        confirm();
+
+        /* Ante*/
+        printf ("*******Ante*******\n");
+        printf ("Each player must bet 1 chip in this round.\n");
         game->blind_betting(game);
-        printf ("*************************\n");
+        printf ("-------------------------\n");
+        printf ("------Pot: %d chips-------\n",game->pot);
+        printStatus(game, 1);
+        confirm();
         
         /* first round */
-        printf ("First Round:\n");
-        printStatus(game, 1);
+        printf ("Dealing...\n");
         game->first_round(game);
         printStatus(game, 2);
+        confirm();
 
         /* first betting */
-        printf ("First Betting: \n");
+        printf ("*******First Betting*******\n");
+        printf ("\n---------Your chips: %d --------\n", game->p[0]->chips);
+        printStatus(game, 2);
         game->reg_betting(game);
-        printf ("*************************\n");
+        printf ("-------------------------\n");
+        confirm();
 
         /* discard */
-        printf ("Discard Round\n");
-        game->discard_round(game);
-        game->p[0]->showHands(game->p[0]);
+        if(!no_others(game, -1)){
+            printf ("*******Discard Round*******\n");
+            printStatus(game, 2);
+            game->discard_round(game);
+            printStatus(game, 2);
+            confirm();
+        }
+
+        /* second betting */
+        if(!no_others(game, -1)){
+            printf ("*******Second Betting*******\n");
+            printf ("\n---------Your chips: %d --------\n", game->p[0]->chips);
+            printStatus(game, 2);
+            game->reg_betting(game);
+            printf ("-------------------------\n");
+            confirm();
+        }
+
+        /* show results */
+        game->show_results(game);
 
         reset(game);
-
         
         /* /\* finish *\/ */
-        /* printf ("Continue? Mr 47 (Any key/N)\n"); */
-        /* scanf ("%s", x); */
-        /* if(!strcmp(x, "N") | !strcmp(x,"n")){ */
-        /*     break; */
-        /* } */
+        printf ("Continue? Mr 47 (Any key/N)\n");
+        scanf ("%s", x);
+        if(!strcmp(x, "N") | !strcmp(x,"n")){
+            break;
+        }
+        else{
+            system("clear");
+        }
     }
 }
 void printStatus(Game* game, int s){
@@ -297,16 +395,17 @@ void printStatus(Game* game, int s){
     int i;
     char x[100];
     if(s == 1){
-        printf ("Game Status:\n");
-        printf ("Pot: %d\n",game->pot);
         if(!game->p[0]->is_fold){
+            printf ("-------------------------\n");
             printf ("Mr 47 has %d chips.\n",game->p[0]->chips);
         }
         for (i = 1; i < 4; i++){
             if(!game->p[i]->is_fold){
+                printf ("-------------------------\n");
                 printf ("Player %d has %d chips.\n", i, game->p[i]->chips);
             }
         }
+        printf ("-------------------------\n");
     }
     else{
         printf ("\n");
@@ -315,28 +414,53 @@ void printStatus(Game* game, int s){
         }
     }
 }
+int no_others(Game* game, int k){
+    int i;
+    int fn;
+    fn = 0;
+    for (i = 0; i < 4; i++){
+        if(game->p[i]->is_fold && i != k){
+            fn++;
+        }
+    }
+    if(fn == 3)
+        return 1;
+    else
+        return 0;
+
+}
 void user_decision(Game* game){
     char x[100];
     int opt;
+    int ret;
     
+    ret = no_others(game, 0);
+    if(ret){
+        game->p[0]->is_finish;
+        return;
+    }
     if(!game->p[0]->is_fold){
         if(game->currentCall == 0){
+            printf ("-------------------------\n");
             printf ("1. Fold\n2. Check\n3. Bet 2\n");
             printf ("Your option?\n");
             scanf ("%s", x);
             opt = atoi(x);
             switch(opt){
             case 1:
-                game->p[0]->fold(game->p[0]);
-                printf ("Mr 47\n");
+                printf ("-------------------------\n");
+                printf ("Mr 47\t");
+                game->p[0]->fold(game->p[0], &(game->currentCall));
                 break;
             case 2:
+                printf ("-------------------------\n");
+                printf ("Mr 47\t");
                 game->p[0]->check(game->p[0]);
-                printf ("Mr 47\n");
                 break;
             case 3:
+                printf ("-------------------------\n");
+                printf ("Mr 47\t");
                 game->p[0]->bet(game->p[0], &(game->currentCall));
-                printf ("Mr 47\n");
                 break;
             default:
                 user_decision(game);
@@ -344,22 +468,26 @@ void user_decision(Game* game){
             }
         }
         else{
+            printf ("-------------------------\n");
             printf ("1. Fold\n2. Call %d\n3. Raise %d\n", game->currentCall, game->currentCall);
             printf ("Your option?\n");
             scanf ("%s", x);
             opt = atoi(x);
             switch(opt){
             case 1:
-                game->p[0]->fold(game->p[0]);
-                printf ("Mr 47\n");
+                printf ("-------------------------\n");
+                printf ("Mr 47\t");
+                game->p[0]->fold(game->p[0], &game->currentCall);
                 break;
             case 2:
+                printf ("-------------------------\n");
+                printf ("Mr 47\t");
                 game->p[0]->call(game->p[0], &game->currentCall);
-                printf ("Mr 47\n");
                 break;
             case 3:
+                printf ("-------------------------\n");
+                printf ("Mr 47\t");
                 game->p[0]->raise(game->p[0], &(game->currentCall));
-                printf ("Mr 47\n");
                 break;
             default:
                 user_decision(game);
@@ -374,9 +502,44 @@ void reset(Game* game){
     free(tmp);
     game->deck = (Deck*) malloc (sizeof(Deck));
     deck_shuffle(game->deck);
+    game->currentCall = 0;
+    game->pot = 0;
+    
     for (i = 0; i < 4; i++){
         game->p[i]->is_fold = 0;
         game->p[i]->is_finish = 0;
         game->p[i]->current_betting = 0;
     }
+}
+void confirm(){
+    char x[100];
+    printf ("-------------------------\n");
+    printf ("Press anything with Enter to continue.\n");
+    scanf("%s", x);
+    system("clear");
+}
+int check_finish(Game* game){
+    int n;
+    int i;
+    int pl;
+    n = 0;
+    for (i = 0; i < 4; i++){
+        if(game->p[i]->chips < 3){
+            n++;
+        }
+        else{
+            pl = i;
+        }
+    }
+    if(n == 3){
+        printf ("--------------------------------------------\n");
+        if(pl == 0)
+            printf ("Congratulations Mr 47, ");
+        else
+            printf ("Congratulations Player %d, ",pl);
+        printf ("You beat other three players on this table!\n");
+        printf ("--------------------------------------------\n");
+        return 1;
+    }
+    return 0;
 }
