@@ -5,7 +5,7 @@
 #include "game.h"
 
 void game_deal(Deck* deck, Player* player){
-    /* should be put in other files */
+    
     Card* tmp;
     int i;
     for (i = 0; i < 5; i++){
@@ -32,6 +32,7 @@ void game_init(Game* game){
     game->currentCall = 0;
 }
 void game_first(Game* game){
+    /* deal the cards */
     int i;
     for (i = 0; i < 4; i++){
         game_deal(game->deck, game->p[i]);
@@ -103,6 +104,8 @@ void user_discard(Game* game){
                     printf ("\n-------You have already chosen this card.-------\n");
                 }
             }
+            else{
+                printf ("\n--------- Y/y, N/n or 1-5.--------\n");            }
         }
     }
     tmp = (Card*) malloc (sizeof(Card));
@@ -166,6 +169,7 @@ void game_show(Game* game){
 }
 void game_blind_bet(Game* game){
     int i;
+    /* Ante betting part */
     for (i = 0; i < 4; i++){
         if(game->p[i]->chips >= 3){
             game->p[i]->chips --;
@@ -177,13 +181,14 @@ void game_blind_bet(Game* game){
     }
 }
 void game_reg_bet(Game* game){
+    /* regular betting */
     int i;
     int r = 0;
     char x[100];
     int opt;
     int fn;
     
-    /* if no check it is correct. */
+    /* if the game is finish, don't need to betting again */
     for (i = 0; i < 4; i++){
         if(game->p[i]->is_finish)
             return;
@@ -211,7 +216,7 @@ void game_reg_bet(Game* game){
             }
         }
     }while(check_end(game));
-            
+    /* renew the pot and play's chips */
     for (i = 0; i < 4; i++){
         game->p[i]->chips -= game->p[i]->current_betting;
         game->pot += game->p[i]->current_betting;
@@ -221,6 +226,7 @@ void game_reg_bet(Game* game){
     }
 }
 int check_end(Game* game){
+    /* whether the betting is finished */
     int i;
     int bet;
     for (i = 0; i < 4; i++){
@@ -299,7 +305,7 @@ void game_menu(Game* game){
             break;
         case 3:
             system("clear");
-            printf ("rules\n\n");
+            help();
             confirm();
             break;
         case 4:
@@ -308,6 +314,22 @@ void game_menu(Game* game){
             system("clear");
             printf ("I hope you know Arabic numbers.\n\n");
         }
+    }
+}
+void help(){
+    /* printf game_guide to console */
+    FILE* fd;
+    char x[100];
+    fd = fopen("../game_guide","r");  
+    if(fd == NULL){  
+        printf("read file error!");  
+    }
+    else{
+        while(!feof(fd)){  
+            fgets(x,100,fd);
+            printf("%s",x);
+        }
+        fclose(fd);
     }
 }
 void game_start(Game* game){
@@ -383,6 +405,8 @@ void game_start(Game* game){
         printf ("Continue? Mr 47 (Any key/N)\n");
         scanf ("%s", x);
         if(!strcmp(x, "N") | !strcmp(x,"n")){
+            /* if not continue, we should restart the game */
+            restart(game);
             break;
         }
         else{
@@ -391,7 +415,8 @@ void game_start(Game* game){
     }
 }
 void printStatus(Game* game, int s){
-    /* s = 1: blind betting */
+    /* s = 1: only print chips and pot information */
+    /* s =2: print hands information of player */
     int i;
     char x[100];
     if(s == 1){
@@ -418,6 +443,7 @@ int no_others(Game* game, int k){
     int i;
     int fn;
     fn = 0;
+    /* If 3 players fold. The game will be end. */
     for (i = 0; i < 4; i++){
         if(game->p[i]->is_fold && i != k){
             fn++;
@@ -433,7 +459,7 @@ void user_decision(Game* game){
     char x[100];
     int opt;
     int ret;
-    
+    /* betting part for user */
     ret = no_others(game, 0);
     if(ret){
         game->p[0]->is_finish;
@@ -496,10 +522,17 @@ void user_decision(Game* game){
         }
     }
 }
+void restart(Game* game){
+    /* reset the chips of each player */
+    int i;
+    for (i = 0; i < 4; i++){
+        game->p[i]->chips = CHIPS;
+    }
+}
 void reset(Game* game){
     int i;
-    Deck* tmp = game->deck;
-    free(tmp);
+
+    /* after the finish of each set, we should reset the pot and chips */
     game->deck = (Deck*) malloc (sizeof(Deck));
     deck_shuffle(game->deck);
     game->currentCall = 0;
@@ -513,6 +546,7 @@ void reset(Game* game){
 }
 void confirm(){
     char x[100];
+    /* user should confirm after each step */
     printf ("-------------------------\n");
     printf ("Press anything with Enter to continue.\n");
     scanf("%s", x);
@@ -522,6 +556,10 @@ int check_finish(Game* game){
     int n;
     int i;
     int pl;
+    /*
+      If there is only one player on the table, the game should be finished.
+      And this player will be final winner.
+    */
     n = 0;
     for (i = 0; i < 4; i++){
         if(game->p[i]->chips < 3){
