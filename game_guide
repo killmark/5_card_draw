@@ -1,0 +1,39 @@
+Each player will have same number of chips at the beginning of the game.
+During the betting round, you should pay attention how many chips you have.
+If you bet the amount more than you have, the system will atomatically let you fold.
+
+For each set:
+
+    1) In Ante, each player is forced to put one chip in pot.
+
+    2) For the first betting round, you can choose bet, fold, check, call, or raise. 
+
+	   Check: If no one has yet opened the betting round, 
+	   	  a player may pass or check, which is equivalent 
+		  to calling the current bet of zero. 
+
+	   Bet:   you can start betting by bet 2.
+
+       	   Call:  call is to match a bet or match a raise. Call 4 means you will put 4
+	   	  chips in pot to remain in.
+
+	   Raise: raise is to increase the size of the bet required to stay in the pot, 
+	   	  forcing all subsequent players to call the new amount if they wish 
+		  to remain in. Raise n means you raise the amount from n to 2n.
+
+ 	   Fold:  to fold is to discard one's hand and forfeit interest in the current pot.
+       
+
+    3) For the discarding round, you can discard 0-5 cards, and dealer will give you 
+       new cards to ensure you have 5 cards in hand.
+
+    4) For the second betting round, you can choose bet, fold, check, call, or raise.
+
+    5) If you still on the table, you will show your hand, and compare with other players.
+
+    6) The winner will get all the chips in the pot.
+
+The player with chips less than 3 in their hand will be kicked out of the game. The rest 
+players will continue playing unitil there is only one player having more than 2 chips. This
+player will be final winner.
+

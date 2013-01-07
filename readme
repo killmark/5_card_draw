@@ -1,0 +1,95 @@
+Readme for 5-Card-Draw Game by Xiaoyu Jin
+1. How to compile and run the game:
+
+       go to ./game/ directory
+       make clean
+       make 
+       ./main
+
+   I add comments in each head file to describe each function. Sometimes you can know what the functions do
+   by their names.
+   I am writing and running the code on linux based machine. I call some unix commands, such as "clear".
+   So, make sure running the program on unix based computer.
+
+2. The directories and files for the game
+
+   The project directory includes 5 directories:
+       list: implement the structure List
+       queue: implement the structure Queue
+       deck: implement the structure Card and Deck
+       player: implement the structure Player, and Player's funcions
+       game: implement the structure Game, and Game's funcions
+   and 2 files:
+       readme: the instructions and important idea of the game.
+       bet_probability: the strategies for AI in the betting round.
+
+   I don't implement Hand structure since I think it is unnecessary. Instead,
+   I implement Card structure, and define a Card array in my Player structure.
+   The funcions of each structure can be checked in each *.h file.
+
+
+3. Some important ideas in the project
+
+    I define 3 arrays: Suit, Face and Type in /player/player.c
+    Suit: 0-3 standing for hearts, diamonds, clubs, spades
+    Face: 0-12 standing for 2, 3 ,...Q, K, A 
+    Type: 0-9 standing for High Card, One Pair,...Straight Flush, Royal Straight Flush
+    A "card" is an integer in the range 0..51, hence
+    Suit = card/13
+    Face = card%13
+
+    a. How can I compare 2 hands?
+
+       For each hand, namely 5 cards, I will check their type(High card, one pair...) at first
+       place. (/player/player.h check_type)
+
+       After determining their type, I will sort them by their type. (/player/player.h sort_by_type)
+       e.g If I get A, 2, 3, A, J. Firstly, I will know its type will be 1(value of One Pair). And then I sort
+       them as: A, A, J, 3, 2. The face value will be 12, 12, 9, 1, 0.
+       Finally, I add type value in front of these face values: 1, 12, 12, 9, 1, 0. I can use 4 bits to represent
+       each value in the sequence. So, I can encode this sequence as 24 bits. In order to get an integer, I set
+       rest 12 bits be 0. Therefore, I can encode a hand of cards to be an integer, and store it in hand_value in 
+       Player structure.(/player/player.h)
+
+       Since each hand have a value, with type value in higher bits, and cards are sorted by type, we can compare their
+       value to get the result. Tie will happen if and only if two hands have exactly 5 cards with same face.
+
+       I get this idea from http://cowboyprogramming.com/2007/01/04/programming-poker-ai/
+
+    b. How can I implement Monte Carlo Method
+       
+       When I get a hand of cards, there are 32 cases I can choose to discard cards. For each case, I can run MC to get
+       an expected value of hand. Finally, I compare these 32 expected value, and choose the case with max expected 
+       value.
+       
+       To get the expect value of each case, I will run simulation on this case many times(such as 10000), and get	
+       an average value from this simulation, this average value will be the expected value of this case.
+
+       e.g If I have (A, A, J, 3, 2), I can run MC this hand. In MC, I will run simulation for these 32 cases. 
+       For the case of discarding Card 4(3) and Card 5(2). I run simulation 10000 times to discard these two cards, 
+       the result may be:(A, A, J, 4, 2), (A, A, J, 10, 7), (A, A, J, J, 8)...I can get an average value of these 
+       simulated hands. This average value will be expected value for this case(discarding Card 4, 5).
+
+       After I get 32 expected value, I will check which one is max, and which case it is. Then I will return the value
+       from 1 to 32 to tell the AI to do the case with max expected value.
+
+       This implement is a little different from the stuff in PDF, but I think it's better. It will not cause the problem
+       mentioned in PDF.
+
+   C. How can I implement betting part
+
+      There are 3 rounds of betting:
+      
+      - Ante round: each player will be forced to put one chip in pot. So, before dealing, there will be 1*(number of players)
+      	chips in the pot.
+
+      - First betting round: After dealing, players can choose check, bet, call, raise and fold. I set probability for all these betting
+        options depending on their hand type(bet_probability). The betting will continue until all the players on the table bet the 
+	same number of chips.
+
+      - Second betting: After discarding, players can bet again. The implement is same to the first betting.
+	
+      For first and seconde betting round, there is a maxium value of betting number. It is defined as NUMR in /player/player.h
+	
+      For simplicity, The user will always be the first one to bet. And, the player with less than 3 chips will be kicked out of the game.
+	

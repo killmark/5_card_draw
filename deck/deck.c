@@ -8,6 +8,7 @@ void deck_shuffle(Deck *deck){
     Card *tmp;
     
     srand(time(0));
+    /* create a deck */
     deck_init(deck, destroy);
     
     for (card = 0; card < 52; card++){
@@ -19,7 +20,7 @@ void deck_shuffle(Deck *deck){
         wDeck[row][col] = card;
     }
 
-
+    /* create 52 cards, and push them into deck */
     for (row = 0; row < 4; row++){
         for (col = 0; col < 13; col++){
             tmp = (Card*) malloc(sizeof(Card));

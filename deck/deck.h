@@ -5,8 +5,8 @@
 typedef Queue Deck;
 
 typedef struct{
-    int val;
-    int type;
+    int val;                    /* face */
+    int type;                   /* suit */
 }Card;
 
 #define deck_init queue_init
@@ -15,7 +15,7 @@ typedef struct{
 #define deck_print queue_print
 #define deck_push queue_enqueue
 #define deck_pop  queue_dequeue
-void deck_shuffle(Deck* deck);
+void deck_shuffle(Deck* deck);  /* create a new deck and shuffle it */
 
 
 

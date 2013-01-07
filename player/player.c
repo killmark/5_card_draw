@@ -8,12 +8,12 @@ char *Suit[4] = {"Hearts", "Diamonds", "Clubs", "Spades"};
 char *Face[13] = {"2", "3", "4",
                   "5", "6", "7", "8", "9",
                   "10", "J", "Q", "K", "A"};
-char *type[10] = {"High Card", "One Pair", "Two Pair", "Three of A Kind",
-                  "Straight", "Flush", "Full House", "Four Of A Kind", "Straight Flush",
+char *type[10] = {"High Card", "One Pair", "Two Pair", "Three of a Kind",
+                  "Straight", "Flush", "Full House", "Four Of a Kind", "Straight Flush",
                   "Royal Straight Flush"};
 
 void player_init(Player* player){
-    player->chips = 100;
+    player->chips = CHIPS;
     player->is_fold = 0;
     player->current_betting = 0;
     player->is_finish = 0;
@@ -34,12 +34,7 @@ void cal_value(Player* player){
     int tmp;
     int tmp2;
     int i;
-    /*
-      type = check_type(player);
-      sort(player); according type;
-      now assuming it is 0.
-    */
-
+    /* calculate the value for each hand */
     player->hand_type = check_type(player);
 
     sort_by_type(player);
@@ -63,7 +58,7 @@ void cal_value(Player* player){
 }
 void swap(Player* player, int a, int b){
     int tmp;
-    
+    /* swap two cards */
     tmp = player->cards[a];
     player->cards[a] = player->cards[b];
     player->cards[b] = tmp;
@@ -72,6 +67,7 @@ void sort_by_val(Player* player){
     int i,j;
     int tmp;
     int f1,f2;
+    /* sort by face value */
     /* insertion sort */
     for (i = 1; i < 5; i++){
         tmp = player->cards[i];
@@ -158,7 +154,7 @@ int check_type(Player* player){
     int suit, face;
     int a[4][13] = {0};
     int i,j;
-
+    /* check hand type */
     for (i = 0; i < 5; i++){
         suit = (player->cards[i])/13;
         face = (player->cards[i])%13;
@@ -212,14 +208,16 @@ void printHand(Player* player){
     int i;
     int suit;
     int face;
-    printf ("--%s\n",type[player->hand_type]);
+
+    face = player->cards[0]%13;
+    printf ("-----------%s %s-----------\n",type[player->hand_type], Face[face]);
+    
     for (i = 0; i < 5; i++){
         suit = player->cards[i]/13;
         face = player->cards[i]%13;
         printf ("Card %d:\t %s\t %s\n", i+1, Face[face], Suit[suit]);
     }
-    printf ("********************\n");
-
+    printf ("-------------------------\n");
 }
 
 int discardHand( Deck* deck, Player* player){
@@ -232,7 +230,6 @@ int discardHand( Deck* deck, Player* player){
     Card **tmp2;
     int num;                    /* the number of total player in game (it can be parameter) */
     
-    //printf ("%d\n",deckForMC->size);
     deckForMC = (Deck*) malloc (sizeof(Deck));
     deck_shuffle(deckForMC);
     tmp = (Card*) malloc (sizeof(Card));
@@ -255,7 +252,10 @@ int discardHand( Deck* deck, Player* player){
         }
     }
     
-    /* remove other cards. */
+    /*
+      remove other cards. To ensure the number in the deck will be same as
+      remaining cards in real deck
+    */
     if(deckForMC->size != deck->size){
         while(deckForMC->size != deck->size){
             deck_pop(deckForMC, (const void**) &tmp);
@@ -275,12 +275,11 @@ int discardHand( Deck* deck, Player* player){
     }
     free(tmp);
     //printf ("%d\n",deckForMC->size);
-    printf ("%d\n",ret);
     return ret;
 }
 
 int MC(Deck* deckForMC, Player* player){
-    /* something wrong in this function to cause aborted (core dumped) */
+    /* MC simulation */
     int i,j,n,h;
     int k;
     int cVal, tVal, DisVal;
@@ -300,8 +299,8 @@ int MC(Deck* deckForMC, Player* player){
     
     MaxHV = (double)player->hand_value;
     DisVal = 0;
-    n = 10000;
     sum = 0.0;
+    n = N;
     *playerT = *player;
         
     for (cVal = 1; cVal < 32; cVal++){
@@ -364,13 +363,14 @@ void player_decision(Player* player, int* curC){
     int a = 100;
     int b = 10;
     int r;
+    /* AI discarding round */
     if(!player->is_fold){
         switch(player->hand_type){
         case 0:
             do_decision(player, curC, 15, 15, 70);
             break;
         case 1:
-            do_decision(player, curC, 10, 5, 85);
+            do_decision(player, curC, 10, 10, 85);
             break;
         case 2:
             do_decision(player, curC, 10, 0, 60);
@@ -403,6 +403,7 @@ void player_decision(Player* player, int* curC){
 
 void do_decision(Player* player, int* curC, int check, int fold, int call){
     int r;
+
     srand(time(NULL));
     if(*curC == 0){
         r = rand()%100;
@@ -414,7 +415,7 @@ void do_decision(Player* player, int* curC, int check, int fold, int call){
 
     r = rand()%100;
     if(r >= 0 && r < fold){
-        player->fold(player);
+        player->fold(player, curC);
         return;
     }
     if(r >= fold && r < fold + call){
@@ -436,35 +437,72 @@ void do_decision(Player* player, int* curC, int check, int fold, int call){
 
 }
 void player_bet(Player* player, int* n){
-    player->current_betting = 2;
-    *n += 2;
-    printf ("bet 2\t");
+    /* the number of player's chips will be checked at first. */
+    if(player->chips >= 2){
+        player->current_betting = 2;
+        *n += 2;
+        printf (" bet 2\n");
+    }
+    else{
+        player->fold(player, n);
+    }
 }
 void player_check(Player* player){
-    printf ("check\t");
+    printf ("check\n");
 }
 
 void player_call(Player* player, int* n){
-    if(player->current_betting != *n){
-        player->current_betting = *n;
-        printf ("call %d\t",*n);
+    /* the number of player's chips will be checked at first. */
+    if(player->chips >= *n){
+        if(player->current_betting != *n){
+            player->current_betting = *n;
+            printf ("call %d\n",*n);
+        }
+        else{
+            player->is_finish = 1;
+        }
+    }
+    else{
+        player->fold(player, n);
+    }
+
+}
+
+void player_raise(Player* player, int* n){
+    int num = NUMR;
+
+    if(*n == num){
+        player->call(player, n);
+    }
+    else{
+        /* the number of player's chips will be checked at first. */
+        if(player->chips >= (*n)*2){
+            if(player->current_betting != *n){
+                player->current_betting = 2*(*n);
+                printf ("raise %d\n",*n);
+                *n *= 2;
+            }
+            else{
+                player->is_finish = 1;
+            }
+        }
+        else{
+            player->fold(player, n);
+        }
+    }
+}
+
+void player_fold(Player* player, int* n){
+    
+    if(player->current_betting == 0 | player->current_betting != *n){
+        /*
+          If players don't have enough chips,
+          they will be forced to fold.
+         */
+        player->is_fold = 1;
+        printf ("fold\n");
     }
     else{
         player->is_finish = 1;
     }
-}
-
-void player_raise(Player* player, int* n){
-    if(*n == 16)
-        player->call(player, n);
-    else{
-        player->current_betting = 2*(*n);
-        *n *= 2;
-        printf ("raise %d\t",*n);
-    }
-}
-
-void player_fold(Player* player){
-    player->is_fold = 1;
-    printf ("fold\t");
 }

@@ -1,0 +1,39 @@
+0: High Card:
+if can check: 15% check, 80% not check
+can't check: 15% fold, 70% call, 15% raise
+
+1: One Pair:
+if can check: 10% check, 80% not check
+can't check: 10% fold, 85% call, 5% raise
+
+2: Two Pairs:
+if can check: 10% check, 90% not check
+can't check: 60% call, 40% raise
+
+3: Three of a kind:
+if can check: 10% check, 90% not check
+can't check: 50% call, 50% raise
+
+4: Straight:
+if can check: 5% check, 95% not check
+can't check: 30% call, 70% raise
+
+5: Flush:
+if can check: 3% check, 97% not check
+can't check: 25% call, 75% raise
+
+6; Full House:
+if can check: 2% check, 98% not check
+can't check: 20% call, 80% raise
+
+7: Four of a kind:
+if can check: 1% check, 99% not check
+can't check: 15% call, 85% raise
+
+8: Straight Flush:
+if can check: 100% not check
+can't check: 15% call, 85% raise
+
+9: Royal Straight Flush:
+can check: 100% not check
+can't check: 15% call, 85% raise
